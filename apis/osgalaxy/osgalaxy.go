@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package sample contains group Sample API versions
-package sample
+// Package osgalaxy contains group osgalaxy API versions
+package osgalaxy

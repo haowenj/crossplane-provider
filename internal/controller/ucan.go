@@ -20,16 +20,16 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/crossplane/provider-template/internal/controller/config"
-	"github.com/crossplane/provider-template/internal/controller/mytype"
+	"github.com/crossplane/provider-ucan/internal/controller/config"
+	"github.com/crossplane/provider-ucan/internal/controller/virtualmachine"
 )
 
-// Setup creates all Template controllers with the supplied logger and adds them to
+// Setup creates all Ucan controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		config.Setup,
-		mytype.Setup,
+		virtualmachine.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

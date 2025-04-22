@@ -1,6 +1,6 @@
 # ====================================================================================
 # Setup Project
-PROJECT_NAME := provider-template
+PROJECT_NAME := provider-ucan
 PROJECT_REPO := github.com/crossplane/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -31,7 +31,7 @@ GOLANGCILINT_VERSION = 2.1.2
 # ====================================================================================
 # Setup Images
 
-IMAGES = provider-template
+IMAGES = provider-ucan
 -include build/makelib/imagelight.mk
 
 # ====================================================================================
@@ -41,12 +41,12 @@ XPKG_REG_ORGS ?= xpkg.upbound.io/crossplane
 # NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
 # inferred.
 XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/crossplane
-XPKGS = provider-template
+XPKGS = provider-ucan
 -include build/makelib/xpkg.mk
 
 # NOTE(hasheddan): we force image building to happen prior to xpkg build so that
 # we ensure image is present in daemon.
-xpkg.build.provider-template: do.build.images
+xpkg.build.provider-ucan: do.build.images
 
 fallthrough: submodules
 	@echo Initial setup complete. Running make again . . .
@@ -94,9 +94,9 @@ dev: $(KIND) $(KUBECTL)
 	@$(KUBECTL) cluster-info --context kind-$(PROJECT_NAME)-dev
 	@$(INFO) Installing Crossplane CRDs
 	@$(KUBECTL) apply --server-side -k https://github.com/crossplane/crossplane//cluster?ref=master
-	@$(INFO) Installing Provider Template CRDs
+	@$(INFO) Installing Provider Ucan CRDs
 	@$(KUBECTL) apply -R -f package/crds
-	@$(INFO) Starting Provider Template controllers
+	@$(INFO) Starting Provider Ucan controllers
 	@$(GO) run cmd/provider/main.go --debug
 
 dev-clean: $(KIND) $(KUBECTL)
@@ -121,7 +121,7 @@ $(GOMPLATE):
 
 export GOMPLATE
 
-# This target prepares repo for your provider by replacing all "template"
+# This target prepares repo for your provider by replacing all "ucan"
 # occurrences with your provider name.
 # This target can only be run once, if you want to rerun for some reason,
 # consider stashing/resetting your git state.

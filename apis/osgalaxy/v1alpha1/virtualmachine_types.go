@@ -25,9 +25,37 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
+type PersonalityParameters struct {
+	Contents string  `json:"contents" tf:"content,omitempty"`
+	Path     *string `json:"path"`
+}
+
+type BlockDeviceParameters struct {
+	BootIndex           float64 `json:"bootIndex,omitempty"`
+	DeleteOnTermination bool    `json:"deleteOnTermination,omitempty"`
+	DeviceName          string  `json:"deviceName"`
+	SourceType          string  `json:"sourceType"`
+	DestinationType     string  `json:"destinationType,omitempty"`
+	VolumeSize          float64 `json:"volumeSize,omitempty"`
+	VolumeType          string  `json:"volumeType,omitempty"`
+	UUID                string  `json:"uuid,omitempty"`
+}
+
 // VirtualMachineParameters are the configurable fields of a VirtualMachine.
 type VirtualMachineParameters struct {
-	ConfigurableField string `json:"configurableField"`
+	Name               string                  `json:"name,omitempty"`
+	ProjectId          string                  `json:"projectId,omitempty"`
+	CellId             string                  `json:"cellId,omitempty"`
+	AccessIPV4         string                  `json:"accessIpV4,omitempty"`
+	AccessIPV6         string                  `json:"accessIpV6,omitempty"`
+	ImageRef           string                  `json:"imageRef,omitempty"`
+	FlavorRef          string                  `json:"flavorRef,omitempty"`
+	AvailabilityZone   string                  `json:"availabilityZone,omitempty"`
+	UserData           string                  `json:"userData,omitempty"`
+	BlockDeviceMapping []BlockDeviceParameters `json:"blockDeviceMapping,omitempty"`
+	Metadata           map[string]string       `json:"metadata,omitempty"`
+	Personality        []PersonalityParameters `json:"personality,omitempty"`
+	SecurityGroups     []string                `json:"securityGroups,omitempty"`
 }
 
 // VirtualMachineObservation are the observable fields of a VirtualMachine.

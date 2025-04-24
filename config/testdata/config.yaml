@@ -1,0 +1,29 @@
+oauth2:
+  oauth2Domain: https://ruantong-casdoor-test.shushangyun.com:12880
+  redirectURL: http://api.ucan.ustack.com
+  clientID: ecaf3d20058d79014931
+  clientSecret: b49d6634bd9c024a6b026160925ad6d25123a02b
+  jwkPem: http://10.0.219.103:8000/.well-known/jwks
+serviceCatalog:
+  provider: http://provider.ucan.ustack.com/provider
+  store: http://store.ucan.ustack.com/shop
+  apiserver: http://zed-apiserver.ucan-system.svc.cluster.local:8081
+  audit: http://zed-audit-apiserver.ucan-system.svc.cluster.local:8081
+  storage: http://storage.ucan.ustack.com/storage
+  baremetal: http://zed-baremetal-controller-manager.ucan-system.svc.cluster.local:8082
+  quality: http://zed-quality-apiserver.ucan-system.svc.cluster.local:9544
+  zaqar: http://zed-zaqar.ucan-system.svc.cluster.local:8888
+  notification: http://zed-notification-apiserver.ucan-system.svc.cluster.local:8081
+  alarm: http://zed-aodh-api.ucan-system.svc.cluster.local:8042
+  virtualmachine: http://127.0.0.1:8080
+  net: http://127.0.0.1:8080
+audit:
+  addr: http://zed-audit-apiserver.ucan-system.svc.cluster.local:8081
+db:
+  name: api_gateway
+  addr: 10.0.219.197
+  username: api_gateway
+  password: 123456
+jwtCacheTTL: 72
+store:
+  controller: http://store.ucan.ustack.com/controller

@@ -1,24 +1,11 @@
-/*
-Copyright 2022 The Crossplane Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package virtualmachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/crossplane/provider-ucan/pkg/ucansdk"
+	"net/http"
 
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -34,6 +21,7 @@ import (
 	"github.com/crossplane/provider-ucan/apis/osgalaxy/v1alpha1"
 	apisv1alpha1 "github.com/crossplane/provider-ucan/apis/v1alpha1"
 	"github.com/crossplane/provider-ucan/internal/features"
+	"github.com/crossplane/provider-ucan/pkg/httpclient"
 )
 
 const (
@@ -45,12 +33,15 @@ const (
 )
 
 type UcanClient struct {
-	Credentials string
+	HttpClient *httpclient.HttpClient
 }
 
 var (
 	newUcanClient = func(credentials []byte) (*UcanClient, error) {
-		return &UcanClient{Credentials: string(credentials)}, nil
+		cli := httpclient.NewHttpClient()
+		cli.SetHeader("Content-Type", "application/json")
+		cli.SetHeader("ACCESS-TOKEN", string(credentials))
+		return &UcanClient{HttpClient: cli}, nil
 	}
 )
 
@@ -138,13 +129,26 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotVirtualMachine)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	vm, code, err := ucansdk.GetVm(c.service.HttpClient, "virtualmachine-pffjvfnk")
+	if err != nil {
+		fmt.Println("get Resource err ", err)
+		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get virtual machine")
+	}
+	if code >= http.StatusBadRequest {
+		fmt.Println("get Resource err", "code", code, "body", string(vm))
+		return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
+	}
+	data := make(map[string]interface{})
+	if err = json.Unmarshal(vm, &data); err != nil {
+		fmt.Println("get Resource err ", err)
+		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get virtual machine")
+	}
+	fmt.Println("get Resource", "code", code, "vm name", data["id"].(string))
 	resourceExists := true
-	if !cr.DeletionTimestamp.IsZero() {
+	if !cr.DeletionTimestamp.IsZero() && code == http.StatusNoContent {
 		resourceExists = false
 	}
-	fmt.Println("===============", c.service.Credentials)
+
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
 		// the managed resource reconciler know that it needs to call Create to

@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"github.com/crossplane/provider-ucan/config"
 	"os"
 	"path/filepath"
 	"time"
@@ -43,6 +42,7 @@ import (
 
 	"github.com/crossplane/provider-ucan/apis"
 	"github.com/crossplane/provider-ucan/apis/v1alpha1"
+	"github.com/crossplane/provider-ucan/config"
 	ucan "github.com/crossplane/provider-ucan/internal/controller"
 	"github.com/crossplane/provider-ucan/internal/features"
 )
@@ -79,6 +79,10 @@ func main() {
 	kingpin.FatalIfError(err, "Cannot get API server rest config")
 
 	err = config.Parse(*ucanConfigFile)
+	if err != nil {
+		kingpin.FatalIfError(err, "Failed to parse ucan config file")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ratelimiter.LimitRESTConfig(cfg, *maxReconcileRate), ctrl.Options{
 		// SyncPeriod in ctrl.Options has been removed since controller-runtime v0.16.0

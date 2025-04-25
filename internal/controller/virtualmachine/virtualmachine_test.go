@@ -37,7 +37,7 @@ import (
 
 func TestObserve(t *testing.T) {
 	type fields struct {
-		service interface{}
+		service *UcanClient
 	}
 
 	type args struct {

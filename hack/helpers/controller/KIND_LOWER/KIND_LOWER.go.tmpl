@@ -50,7 +50,7 @@ const (
 type NoOpService struct{}
 
 var (
-	newNoOpService = func(_ []byte) (interface{}, error) { return &NoOpService{}, nil }
+	newNoOpService = func(_ []byte) (any, error) { return &NoOpService{}, nil }
 )
 
 // Setup adds a controller that reconciles {{ .Env.KIND }} managed resources.
@@ -86,7 +86,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (interface{}, error)
+	newServiceFn func(creds []byte) (any, error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -128,7 +128,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service interface{}
+	service any
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

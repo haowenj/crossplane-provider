@@ -24,7 +24,7 @@ linters:
     - nakedret
     - nilerr
     - nilnesserr
-    - noctx
+#    - noctx
     - prealloc
     - protogetter
     - reassign

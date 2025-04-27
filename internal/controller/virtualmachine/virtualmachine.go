@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"net/http"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/ratelimiter"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/provider-ucan/pkg/ucansdk"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -24,7 +25,6 @@ import (
 	apisv1alpha1 "github.com/crossplane/provider-ucan/apis/v1alpha1"
 	"github.com/crossplane/provider-ucan/internal/features"
 	"github.com/crossplane/provider-ucan/pkg/httpclient"
-	"github.com/crossplane/provider-ucan/pkg/ucansdk"
 )
 
 const (
@@ -33,6 +33,8 @@ const (
 	errGetPC             = "cannot get ProviderConfig"
 	errGetCreds          = "cannot get credentials"
 	errNewClient         = "cannot create new Service"
+
+	vmUUIDAnnotationKey = "ucan.io/virtualmachine-uuid"
 )
 
 type UcanClient struct {
@@ -130,25 +132,30 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotVirtualMachine)
 	}
 
-	if meta.GetExternalName(cr) == "" {
+	uuid, ok := cr.GetAnnotations()[vmUUIDAnnotationKey]
+	if !ok {
+		c.logger.Info("Resource Status", "msg", "uuid not found")
 		return managed.ExternalObservation{
 			ResourceExists: false,
 		}, nil
 	}
 
-	vm, code, err := ucansdk.GetVm(c.service.HttpClient, cr.Spec.ForProvider.Name)
+	vm, code, err := ucansdk.GetVm(c.service.HttpClient, uuid)
 	if err != nil {
 		c.logger.Info("get Resource err", "msg", err)
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get virtual machine")
 	}
-	if code >= http.StatusBadRequest {
-		c.logger.Info("get Resource err", "code", code, "body", string(vm))
-		return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
-	}
+	// if code >= http.StatusBadRequest {
+	//	c.logger.Info("get Resource err", "code", code, "body", string(vm))
+	//	return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
+	// }
 
-	parmar, _ := json.Marshal(cr.Spec.ForProvider)
-	c.logger.Info("get Resource", "code", code, "parmar", string(parmar))
-	resourceExists := code != http.StatusNoContent
+	c.logger.Info("get Resource", "code", code, "parmar", string(vm))
+	resourceExists := code != http.StatusInternalServerError
+	if resourceExists {
+		//将状态置为可用
+		cr.SetConditions(xpv1.Available())
+	}
 
 	return managed.ExternalObservation{
 		ResourceExists:    resourceExists,
@@ -163,12 +170,45 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotVirtualMachine)
 	}
 
-	fmt.Printf("Creating: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	req := ucansdk.CreateServerReq{
+		Name:      cr.Spec.ForProvider.Name,
+		ProjectID: cr.Spec.ForProvider.ProjectId,
+		ImageRef:  cr.Spec.ForProvider.ImageRef,
+		FlavorRef: cr.Spec.ForProvider.FlavorRef,
+	}
+	reqData, err := json.Marshal(req)
+	if err != nil {
+		c.logger.Info("Marshal err create Resource", "msg", err)
+		return managed.ExternalCreation{}, errors.Wrap(err, "cannot create virtual machine")
+	}
+	c.logger.Info("create Resource", "req", string(reqData))
+	vm, code, err := ucansdk.CreateVm(c.service.HttpClient, reqData)
+	if err != nil {
+		c.logger.Info("create Resource err", "msg", err)
+		return managed.ExternalCreation{}, errors.Wrap(err, "cannot create virtual machine")
+	}
+	if code >= http.StatusBadRequest {
+		c.logger.Info("create Resource err", "code", code, "body", string(vm))
+		return managed.ExternalCreation{}, errors.New("cannot create virtual machine")
+	}
 
+	var response ucansdk.ServerResp
+	if err = json.Unmarshal(vm, &response); err != nil {
+		c.logger.Info("unmarshal err create Resource", "msg", err)
+		return managed.ExternalCreation{}, errors.Wrap(err, "cannot unmarshal virtual machine")
+	}
+	c.logger.Info("unmarshal Resource", "id", response.Server.ID, "name", response.Server.Name)
+
+	//将虚拟机的uuid存入标签中
+	mg.SetAnnotations(map[string]string{
+		vmUUIDAnnotationKey: response.Server.ID,
+	})
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
 		// external resource. These will be stored as the connection secret.
-		ConnectionDetails: managed.ConnectionDetails{},
+		ConnectionDetails: managed.ConnectionDetails{
+			"observableField": []byte(response.Server.ID),
+		},
 	}, nil
 }
 

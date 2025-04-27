@@ -1,37 +1,52 @@
-package virtualmachine
+/*
+Copyright 2022 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package volume
 
 import (
 	"context"
 	"fmt"
-	"net/http"
 
-	"github.com/crossplane/crossplane-runtime/pkg/connection"
-	"github.com/crossplane/crossplane-runtime/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/pkg/ratelimiter"
-	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/crossplane/crossplane-runtime/pkg/connection"
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/ratelimiter"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+
 	"github.com/crossplane/provider-ucan/apis/osgalaxy/v1alpha1"
 	apisv1alpha1 "github.com/crossplane/provider-ucan/apis/v1alpha1"
 	"github.com/crossplane/provider-ucan/internal/features"
 	"github.com/crossplane/provider-ucan/pkg/httpclient"
-	"github.com/crossplane/provider-ucan/pkg/ucansdk"
 )
 
 const (
-	errNotVirtualMachine = "managed resource is not a VirtualMachine custom resource"
-	errTrackPCUsage      = "cannot track ProviderConfig usage"
-	errGetPC             = "cannot get ProviderConfig"
-	errGetCreds          = "cannot get credentials"
-	errNewClient         = "cannot create new Service"
+	errNotVolume    = "managed resource is not a Volume custom resource"
+	errTrackPCUsage = "cannot track ProviderConfig usage"
+	errGetPC        = "cannot get ProviderConfig"
+	errGetCreds     = "cannot get credentials"
+
+	errNewClient = "cannot create new Service"
 )
 
 type UcanClient struct {
@@ -47,9 +62,9 @@ var (
 	}
 )
 
-// Setup adds a controller that reconciles VirtualMachine managed resources.
+// Setup adds a controller that reconciles Volume managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.VirtualMachineGroupKind)
+	name := managed.ControllerName(v1alpha1.VolumeGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
@@ -57,7 +72,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.VirtualMachineGroupVersionKind),
+		resource.ManagedKind(v1alpha1.VolumeGroupVersionKind),
 		managed.WithExternalConnecter(&connector{
 			kube:         mgr.GetClient(),
 			usage:        resource.NewProviderConfigUsageTracker(mgr.GetClient(), &apisv1alpha1.ProviderConfigUsage{}),
@@ -71,7 +86,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1alpha1.VirtualMachine{}).
+		For(&v1alpha1.Volume{}).
 		Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
 }
 
@@ -83,10 +98,15 @@ type connector struct {
 	newServiceFn func(creds []byte) (*UcanClient, error)
 }
 
+// Connect typically produces an ExternalClient by:
+// 1. Tracking that the managed resource is using a ProviderConfig.
+// 2. Getting the managed resource's ProviderConfig.
+// 3. Getting the credentials specified by the ProviderConfig.
+// 4. Using the credentials to form a client.
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.VirtualMachine)
+	cr, ok := mg.(*v1alpha1.Volume)
 	if !ok {
-		return nil, errors.New(errNotVirtualMachine)
+		return nil, errors.New(errNotVolume)
 	}
 
 	if err := c.usage.Track(ctx, mg); err != nil {
@@ -110,7 +130,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	zl := zap.New(zap.UseDevMode(true))
-	log := logging.NewLogrLogger(zl.WithName("provider-vm"))
+	log := logging.NewLogrLogger(zl.WithName("provider-volume"))
 	return &external{service: svc, logger: log}, nil
 }
 
@@ -120,43 +140,38 @@ type external struct {
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.VirtualMachine)
+	cr, ok := mg.(*v1alpha1.Volume)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotVirtualMachine)
+		return managed.ExternalObservation{}, errors.New(errNotVolume)
 	}
 
-	if meta.GetExternalName(cr) == "" {
-		return managed.ExternalObservation{
-			ResourceExists: false,
-		}, nil
-	}
-
-	vm, code, err := ucansdk.GetVm(c.service.HttpClient, cr.Spec.ForProvider.Name)
-	if err != nil {
-		c.logger.Info("get Resource err", "msg", err)
-		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get virtual machine")
-	}
-	if code >= http.StatusBadRequest {
-		c.logger.Info("get Resource err", "code", code, "body", string(vm))
-		return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
-	}
-
-	resourceExists := code != http.StatusNoContent
+	// These fmt statements should be removed in the real implementation.
+	fmt.Printf("Observing: %+v", cr)
 
 	return managed.ExternalObservation{
-		ResourceExists:    resourceExists,
-		ResourceUpToDate:  false,
+		// Return false when the external resource does not exist. This lets
+		// the managed resource reconciler know that it needs to call Create to
+		// (re)create the resource, or that it has successfully been deleted.
+		ResourceExists: true,
+
+		// Return false when the external resource exists, but it not up to date
+		// with the desired managed resource state. This lets the managed
+		// resource reconciler know that it needs to call Update.
+		ResourceUpToDate: true,
+
+		// Return any details that may be required to connect to the external
+		// resource. These will be stored as the connection secret.
 		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.VirtualMachine)
+	cr, ok := mg.(*v1alpha1.Volume)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotVirtualMachine)
+		return managed.ExternalCreation{}, errors.New(errNotVolume)
 	}
 
-	fmt.Printf("Creating: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	fmt.Printf("Creating: %+v", cr)
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -166,12 +181,12 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.VirtualMachine)
+	cr, ok := mg.(*v1alpha1.Volume)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotVirtualMachine)
+		return managed.ExternalUpdate{}, errors.New(errNotVolume)
 	}
 
-	fmt.Printf("Updating: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	fmt.Printf("Updating: %+v", cr)
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -181,12 +196,12 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*v1alpha1.VirtualMachine)
+	cr, ok := mg.(*v1alpha1.Volume)
 	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotVirtualMachine)
+		return managed.ExternalDelete{}, errors.New(errNotVolume)
 	}
 
-	fmt.Printf("Deleting: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	fmt.Printf("Deleting: %+v", cr)
 
 	return managed.ExternalDelete{}, nil
 }
@@ -194,7 +209,3 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
-
-// func (c *external) isUpToDate(cr *v1alpha1.VirtualMachine, externalResource map[string]any) (bool, string) {
-//	return true, ""
-// }

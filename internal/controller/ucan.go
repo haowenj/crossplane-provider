@@ -21,7 +21,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane/provider-ucan/internal/controller/config"
+	"github.com/crossplane/provider-ucan/internal/controller/floatingip"
 	"github.com/crossplane/provider-ucan/internal/controller/virtualmachine"
+	"github.com/crossplane/provider-ucan/internal/controller/volume"
 )
 
 // Setup creates all Ucan controllers with the supplied logger and adds them to
@@ -30,6 +32,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		config.Setup,
 		virtualmachine.Setup,
+		volume.Setup,
+		floatingip.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

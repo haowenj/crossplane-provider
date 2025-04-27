@@ -9,18 +9,20 @@ import (
 )
 
 type HttpClient struct {
-	header  map[string]string
-	httpCli *http.Client
-	query   map[string]string
-	timeout time.Duration // http请求超时
+	signCertificate SignCertificate
+	header          map[string]string
+	httpCli         *http.Client
+	query           map[string]string
+	timeout         time.Duration // http请求超时
 }
 
-func NewHttpClient() *HttpClient {
+func NewHttpClient(signCertificate SignCertificate) *HttpClient {
 	return &HttpClient{
-		httpCli: &http.Client{},
-		header:  make(map[string]string),
-		query:   make(map[string]string),
-		timeout: 0, // 默认超时时间为0，表示没有设置超时
+		signCertificate: signCertificate,
+		httpCli:         &http.Client{},
+		header:          make(map[string]string),
+		query:           make(map[string]string),
+		timeout:         0, // 默认超时时间为0，表示没有设置超时
 	}
 }
 
@@ -92,6 +94,11 @@ func (client *HttpClient) Request(url, method string, data []byte) ([]byte, int,
 		}
 		req.URL.RawQuery = q.Encode()
 	}
+
+	if err := Sign(req, client.signCertificate); err != nil {
+		return nil, 0, err
+	}
+
 	rsp, err := client.httpCli.Do(req)
 	if err != nil {
 		return nil, 0, err

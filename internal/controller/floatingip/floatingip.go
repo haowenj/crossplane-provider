@@ -18,6 +18,7 @@ package floatingip
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
@@ -55,7 +56,12 @@ type UcanClient struct {
 
 var (
 	newUcanClient = func(credentials []byte) (*UcanClient, error) {
-		cli := httpclient.NewHttpClient()
+		var signCertificate httpclient.SignCertificate
+		if err := json.Unmarshal(credentials, &signCertificate); err != nil {
+			fmt.Println("*************cannot get credentials*************")
+			return nil, err
+		}
+		cli := httpclient.NewHttpClient(signCertificate)
 		cli.SetHeader("Content-Type", "application/json")
 		cli.SetHeader("ACCESS-TOKEN", string(credentials))
 		return &UcanClient{HttpClient: cli}, nil

@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,9 +41,13 @@ type UcanClient struct {
 
 var (
 	newUcanClient = func(credentials []byte) (*UcanClient, error) {
-		cli := httpclient.NewHttpClient()
+		var signCertificate httpclient.SignCertificate
+		if err := json.Unmarshal(credentials, &signCertificate); err != nil {
+			fmt.Println("*************cannot get credentials*************")
+			return nil, err
+		}
+		cli := httpclient.NewHttpClient(signCertificate)
 		cli.SetHeader("Content-Type", "application/json")
-		cli.SetHeader("ACCESS-TOKEN", string(credentials))
 		return &UcanClient{HttpClient: cli}, nil
 	}
 )
@@ -141,11 +146,13 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
 	}
 
+	parmar, _ := json.Marshal(cr.Spec.ForProvider)
+	c.logger.Info("get Resource", "code", code, "parmar", string(parmar))
 	resourceExists := code != http.StatusNoContent
 
 	return managed.ExternalObservation{
 		ResourceExists:    resourceExists,
-		ResourceUpToDate:  false,
+		ResourceUpToDate:  true,
 		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil
 }

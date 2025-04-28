@@ -73,6 +73,8 @@ spec:
               forProvider:
                 description: VolumeParameters are the configurable fields of a Volume.
                 properties:
+                  availabilityZone:
+                    type: string
                   cellId:
                     type: string
                   description:

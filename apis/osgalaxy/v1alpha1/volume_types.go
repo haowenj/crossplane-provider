@@ -31,14 +31,15 @@ type SchedulerHintsParameters struct {
 
 // VolumeParameters are the configurable fields of a Volume.
 type VolumeParameters struct {
-	ProjectId      string                     `json:"projectId,omitempty"`
-	CellId         string                     `json:"cellId,omitempty"`
-	VolumeType     string                     `json:"volumeType,omitempty"`
-	Size           int64                      `json:"size,omitempty"`
-	Description    string                     `json:"description,omitempty"`
-	Multiattach    bool                       `json:"multiattach,omitempty"`
-	Name           string                     `json:"name,omitempty"`
-	SchedulerHints []SchedulerHintsParameters `json:"schedulerHints,omitempty"`
+	ProjectId        string                     `json:"projectId,omitempty"`
+	CellId           string                     `json:"cellId,omitempty"`
+	VolumeType       string                     `json:"volumeType,omitempty"`
+	Size             int64                      `json:"size,omitempty"`
+	Description      string                     `json:"description,omitempty"`
+	Multiattach      bool                       `json:"multiattach,omitempty"`
+	Name             string                     `json:"name,omitempty"`
+	AvailabilityZone string                     `json:"availabilityZone,omitempty"`
+	SchedulerHints   []SchedulerHintsParameters `json:"schedulerHints,omitempty"`
 }
 
 // VolumeObservation are the observable fields of a Volume.

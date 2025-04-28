@@ -233,7 +233,21 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotVirtualMachine)
 	}
 
-	fmt.Printf("Deleting: name:%s\tfinalizers: %+v\n", cr.Name, cr.Finalizers)
+	uuid, ok := cr.GetAnnotations()[vmUUIDAnnotationKey]
+	if !ok {
+		c.logger.Info("volume Resource Status", "name", cr.Name, "msg", "uuid not found")
+		return managed.ExternalDelete{}, nil
+	}
+	body, code, err := ucansdk.DelVm(c.service.HttpClient, uuid)
+	if err != nil {
+		c.logger.Info("delete Resource err", "name", cr.Name, "msg", err)
+		return managed.ExternalDelete{}, errors.Wrap(err, "cannot delete virtual machine")
+	}
+	if code != http.StatusNoContent {
+		c.logger.Info("delete Resource err", "name", cr.Name, "code", code, "body", string(body))
+		return managed.ExternalDelete{}, errors.New("cannot delete virtual machine")
+	}
+	c.logger.Info("delete Resource", "name", cr.Name, "code", code)
 
 	return managed.ExternalDelete{}, nil
 }

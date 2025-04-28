@@ -143,6 +143,11 @@ func GetVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
 	return client.GET(url, nil)
 }
 
+func DelVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
+	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", config.Cfg.GetString("apiHost"), vmId)
+	return client.DELETE(url, nil)
+}
+
 func CreateVm(client *httpclient.HttpClient, req []byte) ([]byte, int, error) {
 	url := fmt.Sprintf("%s/virtualmachine/v3/servers", config.Cfg.GetString("apiHost"))
 	return client.POST(url, req)

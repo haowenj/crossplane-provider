@@ -27,7 +27,17 @@ import (
 
 // FloatingipParameters are the configurable fields of a Floatingip.
 type FloatingipParameters struct {
-	ConfigurableField string `json:"configurableField"`
+	Name              string `json:"name,omitempty"`
+	ProjectId         string `json:"projectId,omitempty"`
+	CellId            string `json:"cellId,omitempty"`
+	Isp               string `json:"isp,omitempty"`
+	FloatingNetworkId string `json:"floatingNetworkId,omitempty"`
+	QosPolicyId       string `json:"qosPolicyId,omitempty"`
+	RouteId           string `json:"routeId,omitempty"`
+	Description       string `json:"description,omitempty"`
+	ReservationId     string `json:"reservationId,omitempty"`
+	Bandwidth         int64  `json:"bandwidth,omitempty"`
+	AvailabilityZone  string `json:"availabilityZone,omitempty"`
 }
 
 // FloatingipObservation are the observable fields of a Floatingip.

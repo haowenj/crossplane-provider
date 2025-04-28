@@ -74,10 +74,29 @@ spec:
                 description: FloatingipParameters are the configurable fields of a
                   Floatingip.
                 properties:
-                  configurableField:
+                  availabilityZone:
                     type: string
-                required:
-                - configurableField
+                  bandwidth:
+                    format: int64
+                    type: integer
+                  cellId:
+                    type: string
+                  description:
+                    type: string
+                  floatingNetworkId:
+                    type: string
+                  isp:
+                    type: string
+                  name:
+                    type: string
+                  projectId:
+                    type: string
+                  qosPolicyId:
+                    type: string
+                  reservationId:
+                    type: string
+                  routeId:
+                    type: string
                 type: object
               managementPolicies:
                 default:

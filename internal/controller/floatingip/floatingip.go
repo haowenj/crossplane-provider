@@ -166,9 +166,14 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	//	return managed.ExternalObservation{}, errors.New("cannot get eip")
 	// }
 
-	c.logger.Info("get Resource", "code", code, "parmar", string(eip))
+	var response ucansdk.EipGetResponse
+	if err = json.Unmarshal(eip, &response); err != nil {
+		c.logger.Info("unmarshal err get Resource", "msg", err)
+		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal eip")
+	}
+	c.logger.Info("unmarshal Resource", "id", response.FloatingIps.ID, "name", response.FloatingIps.Name, "status", response.FloatingIps.Status)
 	resourceExists := code != http.StatusInternalServerError
-	if resourceExists {
+	if resourceExists && response.FloatingIps.Status == "running" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())
 	}

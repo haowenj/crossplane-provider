@@ -37,8 +37,8 @@ type SecurityGroupParameters struct {
 type BlockDeviceParameters struct {
 	BootIndex           int64  `json:"bootIndex,omitempty"`
 	DeleteOnTermination bool   `json:"deleteOnTermination,omitempty"`
-	DeviceName          string `json:"deviceName"`
-	SourceType          string `json:"sourceType"`
+	DeviceName          string `json:"deviceName,omitempty"`
+	SourceType          string `json:"sourceType,omitempty"`
 	DestinationType     string `json:"destinationType,omitempty"`
 	VolumeSize          int64  `json:"volumeSize,omitempty"`
 	VolumeType          string `json:"volumeType,omitempty"`

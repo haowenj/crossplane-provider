@@ -171,7 +171,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		c.logger.Info("unmarshal err create Resource", "msg", err)
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal volume")
 	}
-	c.logger.Info("get Resource", "code", code, "name", response.Volume.Name, "status", response.Volume.Status)
+	c.logger.Info("get Resource", "code", code, "name", response.Volume.Name, "status", response.Volume.Status, "uuid", response.Volume.ID)
 	if resourceExists && response.Volume.Status == "available" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())

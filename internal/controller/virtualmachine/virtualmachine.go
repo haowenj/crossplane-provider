@@ -145,14 +145,20 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		c.logger.Info("get Resource err", "msg", err)
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get virtual machine")
 	}
-	// if code >= http.StatusBadRequest {
-	//	c.logger.Info("get Resource err", "code", code, "body", string(vm))
-	//	return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
-	// }
+	if code >= http.StatusBadRequest && code != http.StatusNotFound {
+		c.logger.Info("get Resource err", "code", code, "body", string(vm))
+		return managed.ExternalObservation{}, errors.New("cannot get virtual machine")
+	}
 
-	c.logger.Info("get Resource", "code", code, "parmar", string(vm))
-	resourceExists := code != http.StatusInternalServerError
-	if resourceExists {
+	resourceExists := code != http.StatusNotFound
+
+	var response ucansdk.ServerResp
+	if err = json.Unmarshal(vm, &response); err != nil {
+		c.logger.Info("unmarshal err get Resource", "msg", err)
+		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal virtual machine")
+	}
+	c.logger.Info("unmarshal Resource", "id", response.Server.ID, "name", response.Server.Name, "status", response.Server.Status)
+	if resourceExists && response.Server.Status == "Running" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())
 	}
@@ -171,10 +177,22 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	req := ucansdk.CreateServerReq{
-		Name:      cr.Spec.ForProvider.Name,
-		ProjectID: cr.Spec.ForProvider.ProjectId,
-		ImageRef:  cr.Spec.ForProvider.ImageRef,
-		FlavorRef: cr.Spec.ForProvider.FlavorRef,
+		Name:               cr.Spec.ForProvider.Name,
+		CellID:             cr.Spec.ForProvider.CellId,
+		ProjectID:          cr.Spec.ForProvider.ProjectId,
+		ImageRef:           cr.Spec.ForProvider.ImageRef,
+		FlavorRef:          cr.Spec.ForProvider.FlavorRef,
+		BlockDeviceMapping: make([]ucansdk.BlockDeviceMapping, 0, len(cr.Spec.ForProvider.BlockDeviceMapping)),
+	}
+	for _, v := range cr.Spec.ForProvider.BlockDeviceMapping {
+		req.BlockDeviceMapping = append(req.BlockDeviceMapping, ucansdk.BlockDeviceMapping{
+			BootIndex:           int(v.BootIndex),
+			SourceType:          v.SourceType,
+			DestinationType:     v.DestinationType,
+			VolumeSize:          int(v.VolumeSize),
+			VolumeType:          v.VolumeType,
+			DeleteOnTermination: v.DeleteOnTermination,
+		})
 	}
 	reqData, err := json.Marshal(req)
 	if err != nil {

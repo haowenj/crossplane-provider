@@ -160,14 +160,19 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		c.logger.Info("volume Resource err", "msg", err)
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get volume")
 	}
-	// if code >= http.StatusBadRequest {
-	//	c.logger.Info("get Resource err", "code", code, "body", string(volume))
-	//	return managed.ExternalObservation{}, errors.New("cannot get volume")
-	// }
+	if code >= http.StatusBadRequest && code != http.StatusNotFound {
+		c.logger.Info("get Resource err", "code", code, "body", string(volume))
+		return managed.ExternalObservation{}, errors.New("cannot get volume")
+	}
+	resourceExists := code != http.StatusNotFound
 
-	c.logger.Info("get Resource", "code", code, "parmar", string(volume))
-	resourceExists := code != http.StatusInternalServerError
-	if resourceExists {
+	var response ucansdk.VolumeResp
+	if err = json.Unmarshal(volume, &response); err != nil {
+		c.logger.Info("unmarshal err create Resource", "msg", err)
+		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal volume")
+	}
+	c.logger.Info("get Resource", "code", code, "name", response.Volume.Name, "status", response.Volume.Status)
+	if resourceExists && response.Volume.Status == "available" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())
 	}
@@ -192,9 +197,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			Multiattach: cr.Spec.ForProvider.Multiattach,
 			Name:        &cr.Spec.ForProvider.Name,
 			VolumeType:  &cr.Spec.ForProvider.VolumeType,
+			CellID:      cr.Spec.ForProvider.CellId,
 		},
 		OSSCHSchedulerHints: ucansdk.VolumeSchedulerHints{
-			SameHost: []string{},
+			SameHost: cr.Spec.ForProvider.SchedulerHints[0].SameHost,
 		},
 	}
 	reqData, err := json.Marshal(req)

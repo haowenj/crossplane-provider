@@ -153,7 +153,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	c.logger.Info("get Resource", "code", code, "parmar", string(vm))
 	resourceExists := code != http.StatusInternalServerError
 	if resourceExists {
-		//将状态置为可用
+		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())
 	}
 
@@ -199,7 +199,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	c.logger.Info("unmarshal Resource", "id", response.Server.ID, "name", response.Server.Name)
 
-	//将虚拟机的uuid存入标签中
+	// 将虚拟机的uuid存入标签中
 	mg.SetAnnotations(map[string]string{
 		vmUUIDAnnotationKey: response.Server.ID,
 	})

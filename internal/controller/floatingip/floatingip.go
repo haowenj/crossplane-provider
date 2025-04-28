@@ -63,7 +63,6 @@ var (
 		}
 		cli := httpclient.NewHttpClient(signCertificate)
 		cli.SetHeader("Content-Type", "application/json")
-		cli.SetHeader("ACCESS-TOKEN", string(credentials))
 		return &UcanClient{HttpClient: cli}, nil
 	}
 )
@@ -152,7 +151,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	fmt.Printf("Observing: %+v\n", cr.Spec.ForProvider)
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -177,7 +176,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotFloatingip)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	fmt.Printf("Creating: %+v\n", cr.Spec.ForProvider)
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -192,7 +191,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotFloatingip)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	fmt.Printf("Updating: %+v\n", cr.Spec.ForProvider)
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -207,7 +206,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotFloatingip)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	fmt.Printf("Deleting: %+v\n", cr.Spec.ForProvider)
 
 	return managed.ExternalDelete{}, nil
 }

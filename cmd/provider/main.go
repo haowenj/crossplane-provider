@@ -42,7 +42,6 @@ import (
 
 	"github.com/crossplane/provider-ucan/apis"
 	"github.com/crossplane/provider-ucan/apis/v1alpha1"
-	"github.com/crossplane/provider-ucan/config"
 	ucan "github.com/crossplane/provider-ucan/internal/controller"
 	"github.com/crossplane/provider-ucan/internal/features"
 )
@@ -62,7 +61,6 @@ func main() {
 		namespace                  = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
 		enableExternalSecretStores = app.Flag("enable-external-secret-stores", "Enable support for ExternalSecretStores.").Default("false").Envar("ENABLE_EXTERNAL_SECRET_STORES").Bool()
 		enableManagementPolicies   = app.Flag("enable-management-policies", "Enable support for Management Policies.").Default("false").Envar("ENABLE_MANAGEMENT_POLICIES").Bool()
-		ucanConfigFile             = app.Flag("ucan-config", "Path to the ucan config file.").Default("/etc/zed/config.yaml").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -77,12 +75,6 @@ func main() {
 
 	cfg, err := ctrl.GetConfig()
 	kingpin.FatalIfError(err, "Cannot get API server rest config")
-
-	err = config.Parse(*ucanConfigFile)
-	if err != nil {
-		kingpin.FatalIfError(err, "Failed to parse ucan config file")
-		os.Exit(1)
-	}
 
 	mgr, err := ctrl.NewManager(ratelimiter.LimitRESTConfig(cfg, *maxReconcileRate), ctrl.Options{
 		// SyncPeriod in ctrl.Options has been removed since controller-runtime v0.16.0

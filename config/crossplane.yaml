@@ -2,9 +2,9 @@ apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-ucan
-  annotations:
-    meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
-    meta.crossplane.io/source: github.com/crossplane/provider-ucan
-    meta.crossplane.io/license: Apache-2.0
-    meta.crossplane.io/description: |
-      A ucan that can be used to create Crossplane providers.
+spec:
+  package: registry.ustack.com/ucan/ucan-crossplane-provide:v1.0.1
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: ucan-crossplane-provider

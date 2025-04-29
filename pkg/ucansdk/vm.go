@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/crossplane/provider-ucan/config"
 	"github.com/crossplane/provider-ucan/pkg/httpclient"
 )
 
@@ -139,16 +138,19 @@ type FlavorResponse struct {
 }
 
 func GetVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", config.Cfg.GetString("apiHost"), vmId)
+	vmHost := "http://virtualmachine.ucan.ustack.com"
+	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
 	return client.GET(url, nil)
 }
 
 func DelVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", config.Cfg.GetString("apiHost"), vmId)
+	vmHost := "http://virtualmachine.ucan.ustack.com"
+	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
 	return client.DELETE(url, nil)
 }
 
 func CreateVm(client *httpclient.HttpClient, req []byte) ([]byte, int, error) {
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers", config.Cfg.GetString("apiHost"))
+	vmHost := "http://virtualmachine.ucan.ustack.com"
+	url := fmt.Sprintf("%s/virtualmachine/v3/servers", vmHost)
 	return client.POST(url, req)
 }

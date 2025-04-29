@@ -51,20 +51,24 @@ type EipResp struct {
 	Updated         time.Time `json:"updated_at"`
 }
 
+var eipHost = "http://zed-network-apiserver.ucan-system.svc.cluster.local:8088"
+
+// var eipHost = "http://volume.ucan.ustack.com"
+
 func GetEip(client *httpclient.HttpClient, eipId string) ([]byte, int, error) {
-	eipHost := "http://network.ucan.ustack.com"
-	url := fmt.Sprintf("%s/network/v3/floatingips/%s", eipHost, eipId)
+	url := fmt.Sprintf("%s/v3/floatingips/%s", eipHost, eipId)
+	// url := fmt.Sprintf("%s/network/v3/floatingips/%s", eipHost, eipId)
 	return client.GET(url, nil)
 }
 
 func DelEip(client *httpclient.HttpClient, eipId string) ([]byte, int, error) {
-	eipHost := "http://network.ucan.ustack.com"
-	url := fmt.Sprintf("%s/network/v3/floatingips/%s", eipHost, eipId)
+	url := fmt.Sprintf("%s/v3/floatingips/%s", eipHost, eipId)
+	// url := fmt.Sprintf("%s/network/v3/floatingips/%s", eipHost, eipId)
 	return client.DELETE(url, nil)
 }
 
 func CreateEip(client *httpclient.HttpClient, req []byte) ([]byte, int, error) {
-	eipHost := "http://network.ucan.ustack.com"
-	url := fmt.Sprintf("%s/network/v3/floatingips", eipHost)
+	url := fmt.Sprintf("%s/v3/floatingips", eipHost)
+	// url := fmt.Sprintf("%s/network/v3/floatingips", eipHost)
 	return client.POST(url, req)
 }

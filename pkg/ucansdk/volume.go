@@ -68,20 +68,24 @@ type VolumeResp struct {
 	} `json:"volume"`
 }
 
+var volumeHost = "http://zed-volume-apiserver.ucan-system.svc.cluster.local:8088"
+
+// var volumeHost = "http://volume.ucan.ustack.com"
+
 func GetVolume(client *httpclient.HttpClient, projectId, volumeId string) ([]byte, int, error) {
-	volumeHost := "http://volume.ucan.ustack.com"
-	url := fmt.Sprintf("%s/volume/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
+	url := fmt.Sprintf("%s/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
+	// url := fmt.Sprintf("%s/volume/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
 	return client.GET(url, nil)
 }
 
 func DelVolume(client *httpclient.HttpClient, projectId, volumeId string) ([]byte, int, error) {
-	volumeHost := "http://volume.ucan.ustack.com"
-	url := fmt.Sprintf("%s/volume/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
+	url := fmt.Sprintf("%s/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
+	// url := fmt.Sprintf("%s/volume/v3/%s/volumes/%s", volumeHost, projectId, volumeId)
 	return client.DELETE(url, nil)
 }
 
 func CreateVolume(client *httpclient.HttpClient, req []byte, projectId string) ([]byte, int, error) {
-	volumeHost := "http://volume.ucan.ustack.com"
-	url := fmt.Sprintf("%s/volume/v3/%s/volumes", volumeHost, projectId)
+	url := fmt.Sprintf("%s/v3/%s/volumes", volumeHost, projectId)
+	// url := fmt.Sprintf("%s/volume/v3/%s/volumes", volumeHost, projectId)
 	return client.POST(url, req)
 }

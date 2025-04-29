@@ -1,0 +1,10 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-ucan
+spec:
+  version: v1.0.2
+  controller:
+    image: registry.ustack.com/ucan/ucan-crossplane-provide:v1.0.2
+description: My custom provider for XYZ service.
+  

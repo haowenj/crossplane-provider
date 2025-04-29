@@ -137,20 +137,24 @@ type FlavorResponse struct {
 	OSFlavorAccessIsPublic   bool `json:"os-flavor-access:is_public"`
 }
 
+var vmHost = "http://zed-virtualmachine-apiserver.ucan-system.svc.cluster.local:8088"
+
+// var vmHost = "http://virtualmachine.ucan.ustack.com"
+
 func GetVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
-	vmHost := "http://virtualmachine.ucan.ustack.com"
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
+	// url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
+	url := fmt.Sprintf("%s/v3/servers/%s", vmHost, vmId)
 	return client.GET(url, nil)
 }
 
 func DelVm(client *httpclient.HttpClient, vmId string) ([]byte, int, error) {
-	vmHost := "http://virtualmachine.ucan.ustack.com"
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
+	// url := fmt.Sprintf("%s/virtualmachine/v3/servers/%s", vmHost, vmId)
+	url := fmt.Sprintf("%s/v3/servers/%s", vmHost, vmId)
 	return client.DELETE(url, nil)
 }
 
 func CreateVm(client *httpclient.HttpClient, req []byte) ([]byte, int, error) {
-	vmHost := "http://virtualmachine.ucan.ustack.com"
-	url := fmt.Sprintf("%s/virtualmachine/v3/servers", vmHost)
+	// url := fmt.Sprintf("%s/virtualmachine/v3/servers", vmHost)
+	url := fmt.Sprintf("%s/v3/servers", vmHost)
 	return client.POST(url, req)
 }

@@ -101,9 +101,6 @@ spec:
                           type: integer
                         volumeType:
                           type: string
-                      required:
-                      - deviceName
-                      - sourceType
                       type: object
                     type: array
                   cellId:

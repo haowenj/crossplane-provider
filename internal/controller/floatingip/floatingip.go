@@ -161,10 +161,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		c.logger.Info("eip Resource err", "msg", err)
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot get volume")
 	}
-	// if code >= http.StatusBadRequest {
-	//	c.logger.Info("get Resource err", "code", code, "body", string(eip))
-	//	return managed.ExternalObservation{}, errors.New("cannot get eip")
-	// }
+	if code >= http.StatusBadRequest && code != http.StatusNotFound {
+		c.logger.Info("get Resource err", "code", code, "body", string(eip))
+		return managed.ExternalObservation{}, errors.New("cannot get eip")
+	}
 
 	var response ucansdk.EipGetResponse
 	if err = json.Unmarshal(eip, &response); err != nil {
@@ -172,7 +172,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal eip")
 	}
 	c.logger.Info("unmarshal Resource", "id", response.FloatingIps.ID, "name", response.FloatingIps.Name, "status", response.FloatingIps.Status)
-	resourceExists := code != http.StatusInternalServerError
+	resourceExists := code != http.StatusNotFound
 	if resourceExists && response.FloatingIps.Status == "running" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())

@@ -64,7 +64,7 @@ type VirtualMachineParameters struct {
 
 // VirtualMachineObservation are the observable fields of a VirtualMachine.
 type VirtualMachineObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // A VirtualMachineSpec defines the desired state of a VirtualMachine.
@@ -87,7 +87,7 @@ type VirtualMachineStatus struct {
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan}
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan},shortName=vmu
 type VirtualMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

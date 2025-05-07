@@ -158,6 +158,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, "cannot unmarshal virtual machine")
 	}
 	c.logger.Info("unmarshal Resource", "id", response.Server.ID, "name", response.Server.Name, "status", response.Server.Status)
+	cr.Status.AtProvider = v1alpha1.VirtualMachineObservation{
+		Status: response.Server.Status,
+	}
 	if resourceExists && response.Server.Status == "Running" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())

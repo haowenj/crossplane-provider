@@ -42,7 +42,7 @@ type FloatingipParameters struct {
 
 // FloatingipObservation are the observable fields of a Floatingip.
 type FloatingipObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // A FloatingipSpec defines the desired state of a Floatingip.
@@ -65,7 +65,7 @@ type FloatingipStatus struct {
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan}
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan},shortName=fipu
 type Floatingip struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

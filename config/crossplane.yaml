@@ -3,7 +3,7 @@ kind: Provider
 metadata:
   name: provider-ucan
 spec:
-  package: registry.ustack.com/ucan/ucan-crossplane-provide:v1.0.4
+  package: registry.ustack.com/ucan/ucan-crossplane-provide:v1.0.5
   runtimeConfigRef:
     apiVersion: pkg.crossplane.io/v1beta1
     kind: DeploymentRuntimeConfig

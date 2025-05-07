@@ -39,12 +39,13 @@ type VolumeParameters struct {
 	Multiattach      bool                       `json:"multiattach,omitempty"`
 	Name             string                     `json:"name,omitempty"`
 	AvailabilityZone string                     `json:"availabilityZone,omitempty"`
+	ImageRef         string                     `json:"imageRef,omitempty"`
 	SchedulerHints   []SchedulerHintsParameters `json:"schedulerHints,omitempty"`
 }
 
 // VolumeObservation are the observable fields of a Volume.
 type VolumeObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // A VolumeSpec defines the desired state of a Volume.
@@ -67,7 +68,7 @@ type VolumeStatus struct {
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan}
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,ucan},shortName=volu
 type Volume struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

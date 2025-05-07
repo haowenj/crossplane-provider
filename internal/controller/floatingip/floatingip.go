@@ -173,6 +173,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 	c.logger.Info("unmarshal Resource", "id", response.FloatingIps.ID, "name", response.FloatingIps.Name, "status", response.FloatingIps.Status)
 	resourceExists := code != http.StatusNotFound
+	cr.Status.AtProvider = v1alpha1.FloatingipObservation{
+		Status: response.FloatingIps.Status,
+	}
 	if resourceExists && response.FloatingIps.Status == "running" {
 		// 将状态置为可用
 		cr.SetConditions(xpv1.Available())
